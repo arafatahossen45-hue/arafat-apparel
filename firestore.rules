@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == 'arafatahossen45@gmail.com' && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Collections ---
+
+    // Admins Collection
+    // Only existing admins can add new admins.
+    // Users can read their own admin doc to verify status.
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && request.auth.uid == adminId;
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Designs Collection
+    match /designs/{designId} {
+      function isValidDesign(data) {
+        return data.title is string && data.title.size() <= 200 &&
+               data.imageUrl is string && data.imageUrl.size() <= 1000 &&
+               data.category is string &&
+               data.createdAt is timestamp &&
+               (data.get('tags', []) is list) &&
+               (data.get('isFeatured', false) is bool);
+      }
+
+      allow read: if true;
+      
+      allow create: if isAdmin() && 
+                    isValidId(designId) && 
+                    isValidDesign(incoming()) &&
+                    incoming().createdAt == request.time;
+                    
+      allow update: if isAdmin() && 
+                    isValidDesign(incoming()) &&
+                    incoming().createdAt == existing().createdAt; // Immutable createdAt
+
+      allow delete: if isAdmin();
+    }
+
+    // Services Collection
+    match /services/{serviceId} {
+      function isValidService(data) {
+        return data.title is string && data.title.size() <= 100 &&
+               data.description is string && data.description.size() <= 500 &&
+               data.icon is string;
+      }
+
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

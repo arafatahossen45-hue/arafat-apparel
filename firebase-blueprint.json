@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "Design": {
+      "title": "T-Shirt Design",
+      "description": "A portfolio design item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isFeatured": { "type": "boolean" }
+      },
+      "required": ["title", "imageUrl", "category", "createdAt"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "A service offered by the brand",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" }
+      },
+      "required": ["title", "description", "icon"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin user record",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "designs": {
+      "schema": "Design",
+      "description": "Collection of T-shirt designs"
+    },
+    "services": {
+      "schema": "Service",
+      "description": "Collection of services"
+    },
+    "admins": {
+      "schema": "Admin",
+      "description": "Collection of authorized admin UIDs"
+    }
+  }
+}
